@@ -33,17 +33,41 @@ def prune(data):
 		item[0] = ' '.join([w for w in filtered if not w in stop_words])
 	return data 
 
-train = prune(train_data)
-# test = prune(test_data)
-
 # Get term-document matrix (Tf-idf weighted document-term matrix)
 # The matrix has rows of the form (A,B) C where A = Comment number, B = term index (column this term is a header of), C = Tfidf score for term B in comment A
-corpus = train[:,0]
-X = vectorizer.fit_transform(corpus)
+def tfidf(data):
+    return vectorizer.fit_transform(data[:,0])
 
-# Get the terms we have considered in Tf-idf
-# terms = vectorizer.get_feature_names()
+# TRAINING FUNCTIONS
 
+# Convert class name into numerical value
+def assign_class_num(data):
+	classes = np.unique(data[:,1])
+	for item in data[:,1]:
+		item = classes.index(item)
+	
+	return data
+
+# Returns distributions of the classes as an array with entries [class, class_distribution]
+def class_average(data):
+	number_comments = len(data[:,1])
+	classes = np.unique(data[:,1])
+	
+	means = []
+	for x in classes: 
+		mean = np.count_nonzero(data[:,1] == x)/number_comments
+		means += [x,mean]	
+
+	return means 
+
+# Returns probability of seeing term x in a comment
+def feature_average(data, x):
+	text = tokenizer.tokenize(data[:,0].flatten())
+	mean = np.count_nonzero(text == x)/len(text)
+	return mean
+
+train = prune(train_data)
+# test = prune(test_data)
 
 
 
