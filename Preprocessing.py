@@ -52,7 +52,6 @@ def change_to_numeric(data):
 	
 	return data
 
-	
 # Returns distributions of the classes as an array with entries [class, class_distribution]
 def class_average(data):
 	number_comments = len(data[:,1])
@@ -114,9 +113,6 @@ def filter_data(data, threshold):
 
 
     		
-train = prune(train_data)
-print(tokenizer.tokenize(' '.join(train[:,0])))
-# test = prune(test_data)
 
 
 
