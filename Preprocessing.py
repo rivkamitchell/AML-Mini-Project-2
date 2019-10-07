@@ -30,7 +30,7 @@ def prune(data):
 		tokens = tokenizer.tokenize(item[0])
 		tokens = [w.lower() for w in tokens]
 		filtered = [lemmatizer.lemmatize(w, 'v') for w in tokens if w in valid_words]
-		item[0] = ' '.join([w for w in filtered if not w in stop_words])
+		item[0] = ' '.join([w for w in filtered if not w in stop_words and len(w) > 1])
 	return data 
 
 # Get term-document matrix (Tf-idf weighted document-term matrix)
@@ -40,14 +40,19 @@ def tfidf(data):
 
 # TRAINING FUNCTIONS
 
-# Convert class name into numerical value
-def assign_class_num(data):
+# Convert strings into numerical values
+def change_to_numeric(data):
 	classes = np.unique(data[:,1])
-	for item in data[:,1]:
-		item = classes.index(item)
+	features = np.unique(' '.join(data[:,0]))
+
+	for comment in data:
+		comment[1] = classes.index(comment[1])
+		for item in comment[0].split():
+			item = features.index(item)
 	
 	return data
 
+	
 # Returns distributions of the classes as an array with entries [class, class_distribution]
 def class_average(data):
 	number_comments = len(data[:,1])
@@ -56,17 +61,61 @@ def class_average(data):
 	means = []
 	for x in classes: 
 		mean = np.count_nonzero(data[:,1] == x)/number_comments
-		means += [x,mean]	
+		means += [mean]	
 
 	return means 
 
 # Returns probability of seeing term x in a comment
 def feature_average(data, x):
-	text = tokenizer.tokenize(data[:,0].flatten())
+	text = tokenizer.tokenize(' '.join(data[:,0]))
 	mean = np.count_nonzero(text == x)/len(text)
 	return mean
 
+# Variable Ranking
+def score_function(data,j):
+	class_averages = class_average(data)
+	
+	y_square = 0
+	x_square = 0
+	y_linear = 0
+	x_linear = 0
+
+	numerator = 0
+	for i in range(0, len(data[:,1]) - 1):
+		y_linear = (data[i][1] - class_averages[data[i][1]])
+
+		y_square += (data[i][1] - class_averages[data[i][1]])*(data[i][1] - class_averages[data[i][1]])
+		
+		if j in data[i][0]: 
+			x_linear = (1 - feature_average(data, j))
+			numerator += x_linear*y_linear
+
+			x_square += (1 - feature_average(data, j))*(1 - feature_average(data,j))
+		else: 
+			x_linear = -feature_average(data,j)
+			numerator += x_linear*y_linear
+			x_square += (feature_average(data, j))*(feature_average(data,j))
+
+	denominator = x_square*y_square
+
+	return numerator/denominator
+
+# Get rid of low ranking terms
+def filter_data(data, threshold):
+	terms = np.unique((' '.join(data[:,0])).split())
+
+	keep_terms = []
+	for j in terms: 
+		if (score_function(data, j))*(score_function(data,j)) >= threshold: keep_terms.insert(j,0)
+
+	for comment in data:
+		filtered = [w for w in comment[0] if w in keep_terms]
+		comment[0] = ' '.join(filtered)
+
+
+    		
 train = prune(train_data)
+print(tokenizer.tokenize(' '.join(train[:,0])))
 # test = prune(test_data)
 
 
