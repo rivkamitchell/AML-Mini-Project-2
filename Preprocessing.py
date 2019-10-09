@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 import nltk
+
 from nltk.corpus import stopwords
 from nltk.corpus import words
 from nltk.tokenize import RegexpTokenizer
@@ -33,47 +34,54 @@ def prune(data):
 		item[0] = ' '.join([w for w in filtered if not w in stop_words and len(w) > 1])
 	return data 
 
-# Get term-document matrix (Tf-idf weighted document-term matrix)
-# The matrix has rows of the form (A,B) C where A = Comment number, B = term index (column this term is a header of), C = Tfidf score for term B in comment A
-def tfidf(data):
-    return vectorizer.fit_transform(data[:,0])
+# Create a matrix where each row pertains to a comment in our training data. 
+# The last entry of each row contains the subreddit name
+# Otherwise, for an entry (i,j) we have that matrix[i][j] = 1 if word j is in comment i, otherwise matrix[i][j] = 0
+def matrix(data):
+	matrix = []
+	terms = np.unique(tokenizer.tokenize(' '.join(data[:,0])))
+	length = len(terms) + 1
 
-# TRAINING FUNCTIONS
+	for item in data:
+		comment = tokenizer.tokenize(item[0])	
+		indicator = [0]*length
+		
+		for word in comment: 
+			where = np.where(terms == word)[0][0]
+			indicator[where] = 1
+		
+		indicator[length-1] = item[1]
+		matrix += [indicator]
 
-# Convert strings into numerical values
-def change_to_numeric(data):
-	classes = np.unique(data[:,1])
-	features = np.unique(' '.join(data[:,0]))
-
-	for comment in data:
-		comment[1] = classes.index(comment[1])
-		for item in comment[0].split():
-			item = features.index(item)
-	
-	return data
+	return matrix
 
 # Returns distributions of the classes as an array with entries [class, class_distribution]
 def class_average(data):
 	number_comments = len(data[:,1])
 	classes = np.unique(data[:,1])
-	
 	means = []
 	for x in classes: 
 		mean = np.count_nonzero(data[:,1] == x)/number_comments
-		means += [mean]	
+		means += [[x, mean]]	
 
 	return means 
 
 # Returns probability of seeing term x in a comment
 def feature_average(data, x):
 	text = tokenizer.tokenize(' '.join(data[:,0]))
-	mean = np.count_nonzero(text == x)/len(text)
+	mean = text.count(x)/len(text)
 	return mean
+
+# Get term-document matrix (Tf-idf weighted document-term matrix)
+# The matrix has rows of the form (A,B) C where A = Comment number, B = term index (column this term is a header of), C = Tfidf score for term B in comment A
+def tfidf(data):
+	return vectorizer.fit_transform(data[:,0])
+
 
 # Variable Ranking
 def score_function(data,j):
 	class_averages = class_average(data)
-	
+	classes = np.unique(data[:,1])
 	y_square = 0
 	x_square = 0
 	y_linear = 0
@@ -81,9 +89,11 @@ def score_function(data,j):
 
 	numerator = 0
 	for i in range(0, len(data[:,1]) - 1):
-		y_linear = (data[i][1] - class_averages[data[i][1]])
+		y_class = data[i][1]
+		where = np.where(classes == y_class)[0][0]
+		y_linear = (where - class_averages[where][1])
 
-		y_square += (data[i][1] - class_averages[data[i][1]])*(data[i][1] - class_averages[data[i][1]])
+		y_square += y_linear*y_linear
 		
 		if j in data[i][0]: 
 			x_linear = (1 - feature_average(data, j))
@@ -101,15 +111,60 @@ def score_function(data,j):
 
 # Get rid of low ranking terms
 def filter_data(data, threshold):
-	terms = np.unique((' '.join(data[:,0])).split())
+	terms = np.unique(tokenizer.tokenize(' '.join(data[:,0])))
 
 	keep_terms = []
-	for j in terms: 
-		if (score_function(data, j))*(score_function(data,j)) >= threshold: keep_terms.insert(j,0)
+	for word in terms: 
+		if (int(score_function(data, word)))*(int(score_function(data,word))) >= int(threshold): 
+			keep_terms += [word]
 
 	for comment in data:
-		filtered = [w for w in comment[0] if w in keep_terms]
+		filtered = [w for w in tokenizer.tokenize(comment[0]) if w in keep_terms]
 		comment[0] = ' '.join(filtered)
+
+	return data
+
+################################### HOW TO TEST THE FUNCTIONS ###################################
+
+# TEST PRUNE FUNCTION
+#train_pruned = prune(train_data)
+#print(train_pruned)
+
+# TEST MATRIX FUNCTION
+#train_pruned = prune(train_data)
+#train = matrix(train_pruned[0:100,:])
+#print(train)
+
+# TEST CLASS AVERAGES
+#train_pruned = prune(train_data)
+#class_averages = class_average(train_pruned)
+#print(class_averages)
+
+# TEST FEATURE AVERAGES
+#train_pruned = prune(train_data)
+#comment = tokenizer.tokenize(train_pruned[0][0])
+#feature_avrg = feature_average(train_pruned, comment[0])
+#print(feature_avrg)
+
+# TEST TFIDF
+#train_pruned = prune(train_data)
+#tf_idf = tfidf(train_pruned)
+#print(tf_idf)
+
+# TEST SCORE FUNCTION
+#train_pruned = prune(train_data)
+#comment = tokenizer.tokenize(train_pruned[0][0])
+#word = comment[0]
+#score = score_function(train_pruned[0:100,:], word)
+#print(score)
+
+# TEST FILTER FUNCTION
+#train_pruned = prune(train_data)
+#train_filtered = filter_data(train_pruned[0:50,:], 0.5)
+#print(train_filtered)
+
+
+
 
 
     		
