@@ -110,10 +110,10 @@ def get_train_data(data, threshold):
 
 def get_test_data(data, features):
 	test_prune = prune(data)
-	test_binary = matrix(test_prune, features)
+	test_binary = np.array(matrix(test_prune, features))
 	return test_binary
 
-(train, features, classes) = get_train_data(train_data[0:100,:], 100)
+(train, features, classes) = get_train_data(train_data[0:100,:], 1000)
 #print(train_data[:3,0])
 #print(make_test_right(test_data)[:3])
 #print(test_data)
