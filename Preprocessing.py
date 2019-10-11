@@ -77,6 +77,20 @@ def feature_average(data, x):
 def tfidf(data):
 	return vectorizer.fit_transform(data[:,0])
 
+# TFIDF
+def tf_idf(data, term):
+    tf = 0
+	cf = 1
+    for comment in data[0,:]:
+    	words = tokenizer.tokenize(comment)
+		comment_frequency = np.count_nonzero(words == term)
+		if comment_frequency != 0:
+    		tf += comment_frequency
+			cf += 1
+
+	idf = np.log(len(data[:,1])/cf)
+
+	return tf*idf
 
 # Variable Ranking
 def score_function(data,j):
@@ -110,7 +124,7 @@ def score_function(data,j):
 	return numerator/denominator
 
 # Get rid of low ranking terms
-def filter_data(data, threshold):
+def vr_filter(data, threshold):
 	terms = np.unique(tokenizer.tokenize(' '.join(data[:,0])))
 
 	keep_terms = []
@@ -124,6 +138,19 @@ def filter_data(data, threshold):
 
 	return data
 
+def tfidf_filter(data, threshold):
+    terms = np.unique(tokenizer.tokenize(' '.join(data[:,0])))
+
+	keep_terms = []
+	for word in terms:
+    	if tf_idf(data, word) >= threshold:
+    		keep_terms += [word]
+	
+	for comment in data:
+    	filtered = [w for w in tokenizer.tokenize(comment[0]) if w in keep_terms]
+		comment[0] = ' '.join(filtered)
+	
+	return data
 ################################### HOW TO TEST THE FUNCTIONS ###################################
 
 # TEST PRUNE FUNCTION
@@ -151,21 +178,29 @@ def filter_data(data, threshold):
 #tf_idf = tfidf(train_pruned)
 #print(tf_idf)
 
-# TEST SCORE FUNCTION
+# TEST SCORE VARIABLE RANKING FUNCTION
 #train_pruned = prune(train_data)
 #comment = tokenizer.tokenize(train_pruned[0][0])
 #word = comment[0]
 #score = score_function(train_pruned[0:100,:], word)
 #print(score)
 
-# TEST FILTER FUNCTION
+# TEST FILTER VARIABLE RANKING FUNCTION
 #train_pruned = prune(train_data)
-#train_filtered = filter_data(train_pruned[0:50,:], 0.5)
+#train_filtered = vf_filter(train_pruned[0:50,:], 0.5)
 #print(train_filtered)
 
+# TEST SCORE TFIDF FUNCTION
+#train_pruned = prune(train_data)
+#comment = tokenizer.tokenize(train_pruned[0][0])
+#word = comment[0]
+#score = tf_idf(train_pruned[0,100,:], word)
+#print(score)
 
-
-
+# TEST FILTER TFIDF FUNCTION
+#train_pruned = prune(train_data)
+#train_filtered = tfidf_filter(train_pruned, 0.5)
+#print(train_filtered)
 
     		
 
