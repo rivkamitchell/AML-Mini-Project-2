@@ -39,6 +39,8 @@ def prune(data):
 # Otherwise, for an entry (i,j) we have that matrix[i][j] = 1 if word j is in comment i, otherwise matrix[i][j] = 0
 def matrix(data):
 	matrix = []
+	classes = np.unique(data[:,1])
+	
 	terms = np.unique(tokenizer.tokenize(' '.join(data[:,0])))
 	length = len(terms) + 1
 
@@ -50,10 +52,10 @@ def matrix(data):
 			where = np.where(terms == word)[0][0]
 			indicator[where] = 1
 		
-		indicator[length-1] = item[1]
+		indicator[length-1] = np.where(classes == item[1])[0][0]
 		matrix += [indicator]
 
-	return matrix
+	return (matrix, terms, classes)
 
 # Returns distributions of the classes as an array with entries [class, class_distribution]
 def class_average(data):
@@ -79,13 +81,13 @@ def tfidf(data):
 
 # TFIDF
 def tf_idf(data, term):
-    tf = 0
+	tf = 0
 	cf = 1
-    for comment in data[0,:]:
-    	words = tokenizer.tokenize(comment)
+	for comment in data[0,:]:
+		words = tokenizer.tokenize(comment)
 		comment_frequency = np.count_nonzero(words == term)
 		if comment_frequency != 0:
-    		tf += comment_frequency
+			tf += comment_frequency
 			cf += 1
 
 	idf = np.log(len(data[:,1])/cf)
@@ -139,15 +141,14 @@ def vr_filter(data, threshold):
 	return data
 
 def tfidf_filter(data, threshold):
-    terms = np.unique(tokenizer.tokenize(' '.join(data[:,0])))
-
+	terms = np.unique(tokenizer.tokenize(' '.join(data[:,0])))
 	keep_terms = []
 	for word in terms:
-    	if tf_idf(data, word) >= threshold:
-    		keep_terms += [word]
+		if tf_idf(data, word) >= threshold:
+			keep_terms += [word]
 	
 	for comment in data:
-    	filtered = [w for w in tokenizer.tokenize(comment[0]) if w in keep_terms]
+		filtered = [w for w in tokenizer.tokenize(comment[0]) if w in keep_terms]
 		comment[0] = ' '.join(filtered)
 	
 	return data
@@ -158,9 +159,9 @@ def tfidf_filter(data, threshold):
 #print(train_pruned)
 
 # TEST MATRIX FUNCTION
-#train_pruned = prune(train_data)
-#train = matrix(train_pruned[0:100,:])
-#print(train)
+train_pruned = prune(train_data)
+train = matrix(train_pruned[0:100,:])
+print(train)
 
 # TEST CLASS AVERAGES
 #train_pruned = prune(train_data)
