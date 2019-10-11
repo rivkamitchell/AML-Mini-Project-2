@@ -39,7 +39,7 @@ def prune(data):
 # Otherwise, for an entry (i,j) we have that matrix[i][j] = 1 if word j is in comment i, otherwise matrix[i][j] = 0
 def matrix(data):
 	matrix = []
-	classes = np.unique(data[:,1])
+	classes = get_classes(data)
 	
 	terms = get_features(data)
 	length = len(terms) + 1
@@ -55,11 +55,14 @@ def matrix(data):
 		indicator[length-1] = np.where(classes == item[1])[0][0]
 		matrix += [indicator]
 
-	return (matrix, classes)
+	return matrix
 
 # We will change this function as we decide which features to include
 def get_features(data):
 	return np.unique(tokenizer.tokenize(' '.join(data[:,0])))
+
+def get_classes(data):
+    return np.unique(data[:,1])
 
 # Returns distributions of the classes as an array with entries [class, class_distribution]
 def class_average(data):
