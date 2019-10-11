@@ -41,7 +41,7 @@ def matrix(data):
 	matrix = []
 	classes = np.unique(data[:,1])
 	
-	terms = np.unique(tokenizer.tokenize(' '.join(data[:,0])))
+	terms = get_features(data)
 	length = len(terms) + 1
 
 	for item in data:
@@ -55,7 +55,11 @@ def matrix(data):
 		indicator[length-1] = np.where(classes == item[1])[0][0]
 		matrix += [indicator]
 
-	return (matrix, terms, classes)
+	return (matrix, classes)
+
+# We will change this function as we decide which features to include
+def get_features(data):
+	return np.unique(tokenizer.tokenize(' '.join(data[:,0])))
 
 # Returns distributions of the classes as an array with entries [class, class_distribution]
 def class_average(data):
