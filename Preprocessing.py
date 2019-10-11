@@ -34,35 +34,76 @@ def prune(data):
 		item[0] = ' '.join([w for w in filtered if not w in stop_words and len(w) > 1])
 	return data 
 
-# Create a matrix where each row pertains to a comment in our training data. 
+def get_classes(data):
+    return np.unique(data[:,1])
+
+def get_features(data):
+	terms = np.unique(tokenizer.tokenize(' '.join(data[:,0])))
+	return terms
+
+# Create a matrix where each row pertains to a comment in our data. 
 # The last entry of each row contains the subreddit name
 # Otherwise, for an entry (i,j) we have that matrix[i][j] = 1 if word j is in comment i, otherwise matrix[i][j] = 0
+
+# Takes as input comments 
 def matrix(data):
 	matrix = []
-	classes = get_classes(data)
-	
-	terms = get_features(data)
-	length = len(terms) + 1
+	terms = np.unique(tokenizer.tokenize(' '.join(data)))
+	length = len(terms)
 
 	for item in data:
-		comment = tokenizer.tokenize(item[0])	
+		comment = tokenizer.tokenize(item)	
 		indicator = [0]*length
 		
 		for word in comment: 
 			where = np.where(terms == word)[0][0]
 			indicator[where] = 1
 		
-		indicator[length-1] = np.where(classes == item[1])[0][0]
 		matrix += [indicator]
 
 	return matrix
 
-# We will change this function as we decide which features to include
-def get_features(data):
-	return np.unique(tokenizer.tokenize(' '.join(data[:,0])))
+# Get the test data
+def append_classes(data):
+	term_matrix = np.array(matrix(data[:,0]))
+	classes = get_classes(data)
+	
+	class_column = np.zeros((len(data[:,1]),1), dtype = int)	
 
-def get_classes(data):
-    return np.unique(data[:,1])
+	for i in range(0, len(data[:,1])-1):
+		class_column[i] = np.where(classes == data[i][1])[0][0]
+
+	train_data = np.concatenate((term_matrix, class_column), axis = 1)
+	return train_data
+
+# Remove low tfidf scores from training data
+def remove_tfidf(data, top):
+	tfidf_scores = vectorizer.fit_transform(data[:,0])
+	feature_names = vectorizer.get_feature_names()
+	indices = np.argsort(vectorizer.idf_)[::-1]
+	
+	top_features = [feature_names[i] for i in indices[:top]]
+
+	for i in range(0, len(data[:,1])-1):
+		comment = tokenizer.tokenize(data[i][0])
+		filtered = [w for w in comment if w in top_features]
+		data[i][0] = ' '.join(filtered)
+	
+	return data
+	
+def get_train_data(data, threshold):
+	train_prune = prune(data)
+	train_tfidf = remove_tfidf(train_prune, threshold)
+	train_binary = append_classes(train_tfidf)
+
+	return train_binary
+
+def get_test_data(data):
+	test_prune = prune(data)
+	test_binary = matrix(test_prune)
+
+	return test_binary
+
 
 # Returns distributions of the classes as an array with entries [class, class_distribution]
 def class_average(data):
@@ -80,26 +121,6 @@ def feature_average(data, x):
 	text = tokenizer.tokenize(' '.join(data[:,0]))
 	mean = text.count(x)/len(text)
 	return mean
-
-# Get term-document matrix (Tf-idf weighted document-term matrix)
-# The matrix has rows of the form (A,B) C where A = Comment number, B = term index (column this term is a header of), C = Tfidf score for term B in comment A
-def tfidf(data):
-	return vectorizer.fit_transform(data[:,0])
-
-# TFIDF
-def tf_idf(data, term):
-	tf = 0
-	cf = 1
-	for comment in data[0,:]:
-		words = tokenizer.tokenize(comment)
-		comment_frequency = np.count_nonzero(words == term)
-		if comment_frequency != 0:
-			tf += comment_frequency
-			cf += 1
-
-	idf = np.log(len(data[:,1])/cf)
-
-	return tf*idf
 
 # Variable Ranking
 def score_function(data,j):
@@ -147,28 +168,18 @@ def vr_filter(data, threshold):
 
 	return data
 
-def tfidf_filter(data, threshold):
-	terms = np.unique(tokenizer.tokenize(' '.join(data[:,0])))
-	keep_terms = []
-	for word in terms:
-		if tf_idf(data, word) >= threshold:
-			keep_terms += [word]
-	
-	for comment in data:
-		filtered = [w for w in tokenizer.tokenize(comment[0]) if w in keep_terms]
-		comment[0] = ' '.join(filtered)
-	
-	return data
-################################### HOW TO TEST THE FUNCTIONS ###################################
+################### HOW TO TEST THE FUNCTIONS ###################################
+
+#print(get_train_data(train_data[0:100,:], 100))
 
 # TEST PRUNE FUNCTION
 #train_pruned = prune(train_data)
 #print(train_pruned)
 
 # TEST MATRIX FUNCTION
-train_pruned = prune(train_data)
-train = matrix(train_pruned[0:100,:])
-print(train)
+#train_pruned = prune(train_data)
+#train = matrix(train_pruned[0:100,:])
+#print(train)
 
 # TEST CLASS AVERAGES
 #train_pruned = prune(train_data)
