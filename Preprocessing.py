@@ -94,6 +94,23 @@ def remove_tfidf(data, top):
 	
 	return (data, top_features)
 
+# Return comments with only terms that had high mutual information scores - tested and pretty sure its working
+def mutual_info(comments, subreddits, features, threshold):
+	subreddits_num = class_num(subreddits)[0]
+	bin_matrix = matrix(comments, features)
+	mutual_information = sklearn.feature_selection.mutual_info_classif(bin_matrix, subreddits_num.ravel(), copy = True)
+
+	for i in range(0, len(comments)):
+		words = tokenizer.tokenize(comments[i])
+		indices = np.where(features == words)[0]
+
+		bad_indices = [w for w in indices if mutual_information[w] < threshold]
+
+		for w in bad_indices:
+			bin_matrix[i][w] = 0
+
+	return np.array(bin_matrix)
+
 def get_train_data(data, threshold):
 	comments = data[:,0]	
 	subreddits = data[:,1]
@@ -106,6 +123,10 @@ def get_train_data(data, threshold):
 	train_full = append_classes(train_binary, results)
 
 	return (train_full, features, classes)
+
+##### TEST STUFF #####
+(train, features, classes) = get_train_data(train_data[0:100,:], 1000)
+print(mutual_info(prune(train_data[0:100,0]), train_data[0:100,1], features, 0.01))
 
 def get_test_data(data, features):
 	test_prune = prune(data)
@@ -133,12 +154,12 @@ def new_get_test_data(data, threshold):
 	return (test_binary, features)
 
 ############################# HI #######################################
-(train, features, classes) = get_train_data(train_data[0:100,:], 1000)
-test = get_test_data(test_data[0:100], features)
+#(train, features, classes) = get_train_data(train_data[0:100,:], 1000)
+#test = get_test_data(test_data[0:100], features)
 
-print(train)
-print(features)
-print(test)
+#print(train)
+#print(features)
+#print(test)
 ########################################################################
 
 # Returns distributions of the classes as an array with entries [class, class_distribution]
