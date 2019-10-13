@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import csv
 
+import Preprocessing
+
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -24,7 +26,7 @@ test_data = df.values[:,1]
 
 # MAX VOTE
 def majority_vote(train_data, test_data):
-    (X_train, X_test, y_train, y_test) = train_test_split(train_data[:,0], train_data[:,1], random_state = 0)
+    (X_train, X_test, y_train, y_test) = train_test_split(Preprocessing.prune(train_data[:,0]), train_data[:,1], random_state = 0)
     
     count_vect = CountVectorizer()
     X_train_counts = count_vect.fit_transform(X_train)
@@ -37,16 +39,17 @@ def majority_vote(train_data, test_data):
     Decision_Trees_Classification = DecisionTreeClassifier(random_state = 0).fit(X_train_tfidf, y_train)
     Logistic_Regression_Classification = LogisticRegression(random_state = 0, solver = 'lbfgs', multi_class = 'multinomial').fit(X_train_tfidf, y_train)
     
+    test = Preprocessing.prune(test_data)
 
-    mc = Multinomial_Classification.predict(count_vect.transform(test_data))
-    bc = Bernoulli_Classification.predict(count_vect.transform(test_data))
-    dt = Decision_Trees_Classification.predict(count_vect.transform(test_data))
-    lr = Logistic_Regression_Classification.predict(count_vect.transform(test_data))
+    mc = Multinomial_Classification.predict(count_vect.transform(test))
+    bc = Bernoulli_Classification.predict(count_vect.transform(test))
+    dt = Decision_Trees_Classification.predict(count_vect.transform(test))
+    lr = Logistic_Regression_Classification.predict(count_vect.transform(test))
     
     votes = np.array([mc, bc, dt, lr]).T
 
     predictions = []
-    for i in range(0, len(test_data)):
+    for i in range(0, len(test)):
         vote_0 = votes[i][0]
         vote_1 = votes[i][1]
         vote_2 = votes[i][2]
@@ -73,7 +76,7 @@ def majority_vote(train_data, test_data):
     return predictions
 
 def predict(train_data, test_data, model):
-    (X_train, X_test, y_train, y_test) = train_test_split(train_data[:,0], train_data[:,1], random_state = 0)
+    (X_train, X_test, y_train, y_test) = train_test_split(Preprocessing.prune(train_data[:,0]), train_data[:,1], random_state = 0)
 
     count_vect = CountVectorizer()
     X_train_counts = count_vect.fit_transform(X_train)
@@ -81,21 +84,23 @@ def predict(train_data, test_data, model):
     tfidf_transformer = TfidfTransformer()
     X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
 
+    test = Preprocessing.prune(test_data)
+
     if model == 'Bernoulli':
         Bernoulli_Classification = BernoulliNB().fit(X_train_tfidf, y_train)
-        return Bernoulli_Classification.predict(count_vect.transform(test_data))
+        return Bernoulli_Classification.predict(count_vect.transform(test))
         
     if model == 'Multinomial':
         Multinomial_Classification = MultinomialNB().fit(X_train_tfidf, y_train)
-        return Multinomial_Classification.predict(count_vect.transform(test_data))
+        return Multinomial_Classification.predict(count_vect.transform(test))
     
     if model == 'DecisionTree':
         Decision_Trees_Classification = DecisionTreeClassifier(random_state = 0).fit(X_train_tfidf, y_train)
-        return Decision_Trees_Classification.predict(count_vect.transform(test_data))
+        return Decision_Trees_Classification.predict(count_vect.transform(test))
     
     if model == 'Logistic':
         Logistic_Regression_Classification = LogisticRegression(random_state = 0, solver = 'lbfgs', multi_class = 'multinomial').fit(X_train_tfidf, y_train)
-        return Logistic_Regression_Classification.predict(count_vect.transform(test_data))
+        return Logistic_Regression_Classification.predict(count_vect.transform(test))
 
     else: 
         return majority_vote(train_data, test_data)
@@ -106,6 +111,7 @@ bernoulli_predictions = predict(train_data, test_data, 'Bernoulli')
 decision_predictions = predict(train_data, test_data, 'DecisionTree')
 logistic_predictions = predict(train_data, test_data, 'Logistic')
 majority_predictions = predict(train_data, test_data, 'Majority')
+
 #with open('MultinomialResults.csv', mode = 'w') as file1:
 #    writer1 = csv.writer(file1, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
 #    writer1.writerow(['id','Category'])
