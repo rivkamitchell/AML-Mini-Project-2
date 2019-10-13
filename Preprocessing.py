@@ -140,8 +140,9 @@ def get_train_data(data, threshold):
 	return (train_full, features, classes)
 
 ##### TEST STUFF #####
-(train, features, classes) = get_train_data(train_data[0:1000,:], 10000)
-print(mutual_info(prune(train_data[0:1000,0]), train_data[0:1000,1], features, 0.001))
+#(train, features, classes) = get_train_data(train_data[0:1000,:], 10000)
+#print(mutual_info(prune(train_data[0:1000,0]), train_data[0:1000,1], features, 0.001))
+######################
 
 def get_test_data(data, features):
 	test_prune = prune(data)
@@ -194,49 +195,4 @@ def feature_average(data, x):
 	mean = text.count(x)/len(text)
 	return mean
 
-# Variable Ranking
-def score_function(data,j):
-	class_averages = class_average(data)
-	classes = np.unique(data[:,1])
-	y_square = 0
-	x_square = 0
-	y_linear = 0
-	x_linear = 0
-
-	numerator = 0
-	for i in range(0, len(data[:,1]) - 1):
-		y_class = data[i][1]
-		where = np.where(classes == y_class)[0][0]
-		y_linear = (where - class_averages[where][1])
-
-		y_square += y_linear*y_linear
-		
-		if j in data[i][0]: 
-			x_linear = (1 - feature_average(data, j))
-			numerator += x_linear*y_linear
-
-			x_square += (1 - feature_average(data, j))*(1 - feature_average(data,j))
-		else: 
-			x_linear = -feature_average(data,j)
-			numerator += x_linear*y_linear
-			x_square += (feature_average(data, j))*(feature_average(data,j))
-
-	denominator = x_square*y_square
-
-	return numerator/denominator
-
-# Get rid of low ranking terms
-def vr_filter(data, threshold):
-	terms = np.unique(tokenizer.tokenize(' '.join(data[:,0])))
-
-	keep_terms = []
-	for word in terms: 
-		if (int(score_function(data, word)))*(int(score_function(data,word))) >= int(threshold): 
-			keep_terms += [word]
-
-	for comment in data:
-		filtered = [w for w in tokenizer.tokenize(comment[0]) if w in keep_terms]
-		comment[0] = ' '.join(filtered)
-
-	return data
 
