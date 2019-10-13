@@ -94,21 +94,36 @@ def remove_tfidf(data, top):
 	
 	return (data, top_features)
 
-# Return comments with only terms that had high mutual information scores - tested and pretty sure its working
+# Return comments with only terms that had high mutual information scores - tested and pretty sure its working - find more efficient way to do this
 def mutual_info(comments, subreddits, features, threshold):
 	subreddits_num = class_num(subreddits)[0]
 	bin_matrix = matrix(comments, features)
-	mutual_information = sklearn.feature_selection.mutual_info_classif(bin_matrix, subreddits_num.ravel(), copy = True)
 
+	new_matrix = []
+	indices_full = [] 
 	for i in range(0, len(comments)):
 		words = tokenizer.tokenize(comments[i])
-		indices = np.where(features == words)[0]
 
-		bad_indices = [w for w in indices if mutual_information[w] < threshold]
+		indices = [i for i in range(0, len(features)-1) if features[i] in words]
+		indices_full += indices
+		
+		new_row = len(features)*[0]
+		for word in words:
+			if word in features:
+				index = [i for i in range(0, len(features)) if features[i] == word][0]
+				new_row[index] += 1
+		new_matrix += [new_row]
 
-		for w in bad_indices:
-			bin_matrix[i][w] = 0
+	unique_indices = np.unique(indices_full)
+	
+	mutual_info = sklearn.feature_selection.mutual_info_classif(new_matrix, subreddits_num.ravel(), copy = True)
+	
+	bad_indices = [i for i in unique_indices if mutual_info[i] < threshold]
 
+	for i in range(0, len(comments)):
+		for j in bad_indices:
+	 		bin_matrix[i][j] = 0
+	
 	return np.array(bin_matrix)
 
 def get_train_data(data, threshold):
@@ -125,8 +140,8 @@ def get_train_data(data, threshold):
 	return (train_full, features, classes)
 
 ##### TEST STUFF #####
-(train, features, classes) = get_train_data(train_data[0:100,:], 1000)
-print(mutual_info(prune(train_data[0:100,0]), train_data[0:100,1], features, 0.01))
+(train, features, classes) = get_train_data(train_data[0:1000,:], 10000)
+print(mutual_info(prune(train_data[0:1000,0]), train_data[0:1000,1], features, 0.001))
 
 def get_test_data(data, features):
 	test_prune = prune(data)
