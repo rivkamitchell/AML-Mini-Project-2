@@ -93,8 +93,26 @@ def remove_tfidf(data, top):
 		data[i] = ' '.join(filtered)
 	
 	return (data, top_features)
-	
-def get_train_data(data, features):
+
+def get_train_data(data, threshold):
+	comments = data[:,0]	
+	subreddits = data[:,1]
+
+	train_prune = prune(comments)
+	(train_tfidf, features) = remove_tfidf(train_prune, threshold)
+	train_binary = matrix(train_tfidf, features)
+
+	(results, classes) = class_num(subreddits)
+	train_full = append_classes(train_binary, results)
+
+	return (train_full, features, classes)
+
+def get_test_data(data, features):
+	test_prune = prune(data)
+	test_binary = np.array(matrix(test_prune, features))
+	return test_binary
+
+def new_get_train_data(data, features):
 	comments = data[:,0]
 	subreddits = data[:,1]
 
@@ -107,7 +125,7 @@ def get_train_data(data, features):
 
 	return (train_full, classes)
 
-def get_test_data(data, threshold):
+def new_get_test_data(data, threshold):
 	test_prune = prune(data)
 	(test_tfidf, features) = remove_tfidf(test_prune, threshold)
 	test_binary = np.array(matrix(test_tfidf, features))
@@ -115,13 +133,12 @@ def get_test_data(data, threshold):
 	return (test_binary, features)
 
 ############################# HI #######################################
-(test, features) = get_test_data(test_data[0:100], 10000)
-(train, classes) = get_train_data(train_data[0:100,:], features)
+(train, features, classes) = get_train_data(train_data[0:100,:], 1000)
+test = get_test_data(test_data[0:100], features)
 
-print(test)
-print(features)
 print(train)
-
+print(features)
+print(test)
 ########################################################################
 
 # Returns distributions of the classes as an array with entries [class, class_distribution]
