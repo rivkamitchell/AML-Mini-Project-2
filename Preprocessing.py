@@ -27,12 +27,14 @@ test_data = df.values[:,1]
 
 # Lemmatize the comment and remove stopwords, and words that are not valid - careful here this gets rid of numbers so we might want to reconsider 
 def prune(data):
+	pruned = []
 	for item in data:
 		tokens = tokenizer.tokenize(item)
 		tokens = [w.lower() for w in tokens]
-		filtered = [lemmatizer.lemmatize(w, 'v') for w in tokens if w in valid_words]
+		filtered = [lemmatizer.lemmatize(w, 'n') for w in tokens]
 		item = ' '.join([w for w in filtered if not w in stop_words and len(w) > 1])
-	return data 
+		pruned += [item]
+	return pruned
 
 def get_classes(data):
     return np.unique(data[:,1])
