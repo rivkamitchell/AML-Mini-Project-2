@@ -16,6 +16,8 @@ from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.linear_model import LogisticRegression
 
+from sklearn.ensemble import AdaBoostClassifier
+
 # Read training csv file, remove ID
 df = pd.read_csv('reddit_train.csv', sep = ',', header = None)
 train_data = df.values[1:,1:]
@@ -24,10 +26,11 @@ train_data = df.values[1:,1:]
 df = pd.read_csv('reddit_test.csv')
 test_data = df.values[:,1]
 
+
 # MAX VOTE
 def majority_vote(train_data, test_data):
     (X_train, X_test, y_train, y_test) = train_test_split(Preprocessing.prune(train_data[:,0]), train_data[:,1], random_state = 0)
-    
+
     count_vect = CountVectorizer()
     X_train_counts = count_vect.fit_transform(X_train)
 
@@ -86,6 +89,10 @@ def predict(train_data, test_data, model):
 
     test = Preprocessing.prune(test_data)
 
+    if model == 'Ada':
+        Ada_Classification = AdaBoostClassifier(base_estimator = MultinomialNB(), n_estimators = 200, random_state = 0).fit(X_train_tfidf, y_train)
+        return Ada_Classification.predict(count_vect.transform(test))
+
     if model == 'Bernoulli':
         Bernoulli_Classification = BernoulliNB().fit(X_train_tfidf, y_train)
         return Bernoulli_Classification.predict(count_vect.transform(test))
@@ -105,18 +112,18 @@ def predict(train_data, test_data, model):
     else: 
         return majority_vote(train_data, test_data)
 
-
-multinomial_predictions = predict(train_data, test_data, 'Multinomial')
+ada_predictions = predict(train_data, test_data, 'Ada')
+#multinomial_predictions = predict(train_data, test_data, 'Multinomial')
 #bernoulli_predictions = predict(train_data, test_data, 'Bernoulli')
 #decision_predictions = predict(train_data, test_data, 'DecisionTree')
 #logistic_predictions = predict(train_data, test_data, 'Logistic')
 #majority_predictions = predict(train_data, test_data, 'Majority')
 
-with open('MultinomialResults.csv', mode = 'w') as file1:
+with open('Ada.csv', mode = 'w') as file1:
     writer1 = csv.writer(file1, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
     writer1.writerow(['id','Category'])
-    for i in range(0, len(multinomial_predictions)):
-        writer1.writerow([str(i), str(multinomial_predictions[i])])
+    for i in range(0, len(ada_predictions)):
+        writer1.writerow([str(i), str(ada_predictions[i])])
 
 #with open('BernoulliResults.csv', mode = 'w') as file2:
 #    writer2 = csv.writer(file2, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
