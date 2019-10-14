@@ -90,7 +90,7 @@ def predict(train_data, test_data, model):
     test = Preprocessing.prune(test_data)
 
     if model == 'Ada':
-        Ada_Classification = AdaBoostClassifier(base_estimator = MultinomialNB(), n_estimators = 200, random_state = 0).fit(X_train_tfidf, y_train)
+        Ada_Classification = AdaBoostClassifier(base_estimator = MultinomialNB(0.05), n_estimators = 200, random_state = 0).fit(X_train_tfidf, y_train)
         return Ada_Classification.predict(count_vect.transform(test))
 
     if model == 'Bernoulli':
