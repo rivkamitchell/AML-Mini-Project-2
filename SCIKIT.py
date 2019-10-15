@@ -93,6 +93,9 @@ def predict(train_data, test_data, model):
     # run tfidf_vectorizer on the training data
     X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
     
+    # Note that so far, we have not removed features based on their respective tfidf scores, only their document frequency.
+    # This is something we might want to consider doing. 
+
     test = Preprocessing.prune(test_data)
 
     if model == 'Bernoulli':
