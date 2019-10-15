@@ -81,22 +81,24 @@ def majority_vote(train_data, test_data):
         predictions += [maj_vote]
     return predictions
 
-def predict(train_data, test_data, model):
-    (X_train, X_test, y_train, y_test) = train_test_split(Preprocessing.prune(train_data[:,0]), train_data[:,1], random_state = 0)
+def predict(train_data, test_data, model, a):
+    (X_train, y_train) = (train_data[:,0], train_data[:,1])
 
     # tfidf_vectorizer:
     # ngram_range = (1,2) means that it will tokenize our comments into both words and bi-grams
     # max_df = 0.8 means that it will keep only features that occur in below 80% of the comments
     # max_features = 5000 means that it will also only keep the top 5000 features (in terms of document frequency)
-    tfidf_vectorizer = TfidfVectorizer(ngram_range = (1,2), max_df = 0.8, max_features = 5000)
+    tfidf_vectorizer = TfidfVectorizer(max_df = 0.085)
     
-    # run tfidf_vectorizer on the training data
     X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
+    print(tfidf_vectorizer.get_feature_names())
+    # run tfidf_vectorizer on the training data
+    #X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
     
     # Note that so far, we have not removed features based on their respective tfidf scores, only their document frequency.
     # This is something we might want to consider doing. 
 
-    test = Preprocessing.prune(test_data)
+    test = test_data
 
     if model == 'Bernoulli':
         Bernoulli_Classification = BernoulliNB().fit(X_train_tfidf, y_train)
@@ -117,18 +119,42 @@ def predict(train_data, test_data, model):
     else: 
         return majority_vote(train_data, test_data)
 
+
+def good_k_fold(data, k, a):#naive
+    size=int(len(data)/k)
+    acc=0
+    for i in range(k):
+        temp1=i*size
+        temp2=(i+1)*size
+        train=np.vstack((data[:temp1], data[temp2:]))
+        
+        (vali, vali_result)=(data[temp1:temp2,0], data[temp1: temp2, 1])
+        
+        pred=predict(train, vali, 'Multinomial', a)
+        acc_temp=0
+        for i in range(len(vali)):
+            if pred[i]==vali_result[i]:
+                acc_temp+=1
+                
+        print(acc_temp/len(vali))
+        acc+=acc_temp/len(vali)
+        
+    return acc/k
+
+print(good_k_fold(train_data, 7, 0.05))
+
 #ada_predictions = predict(train_data, test_data, 'Ada')
-multinomial_predictions = predict(train_data, test_data, 'Multinomial')
+#multinomial_predictions = predict(train_data, test_data, 'Multinomial')
 #bernoulli_predictions = predict(train_data, test_data, 'Bernoulli')
 #decision_predictions = predict(train_data, test_data, 'DecisionTree')
 #logistic_predictions = predict(train_data, test_data, 'Logistic')
 #majority_predictions = predict(train_data, test_data, 'Majority')
 
-with open('MultinomialResults.csv', mode = 'w') as file1:
-    writer1 = csv.writer(file1, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
-    writer1.writerow(['id','Category'])
-    for i in range(0, len(multinomial_predictions)):
-        writer1.writerow([str(i), str(multinomial_predictions[i])])
+#with open('MultinomialResults.csv', mode = 'w') as file1:
+#    writer1 = csv.writer(file1, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
+#    writer1.writerow(['id','Category'])
+#    for i in range(0, len(multinomial_predictions)):
+#        writer1.writerow([str(i), str(multinomial_predictions[i])])
 
 #with open('BernoulliResults.csv', mode = 'w') as file2:
 #    writer2 = csv.writer(file2, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
