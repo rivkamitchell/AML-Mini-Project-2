@@ -32,7 +32,7 @@ def prune(data):
 		tokens = tokenizer.tokenize(item)
 		tokens = [w.lower() for w in tokens]
 		filtered = [lemmatizer.lemmatize(w, 'n') for w in tokens]
-		item = ' '.join([w for w in filtered if not w in stop_words and len(w) > 1])
+		item = ' '.join([w for w in filtered if not w in stop_words])
 		pruned += [item]
 	return pruned
 
