@@ -7,7 +7,7 @@ import Preprocessing
 
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import TfidfTransformer, TfidfVectorizer
 
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.naive_bayes import MultinomialNB
@@ -15,7 +15,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.linear_model import LogisticRegression
-
+from sklearn.feature_selection import SelectKBest, mutual_info_classif, chi2
 from sklearn.ensemble import AdaBoostClassifier
 
 # Read training csv file, remove ID
@@ -31,11 +31,14 @@ test_data = df.values[:,1]
 def majority_vote(train_data, test_data):
     (X_train, X_test, y_train, y_test) = train_test_split(Preprocessing.prune(train_data[:,0]), train_data[:,1], random_state = 0)
 
-    count_vect = CountVectorizer()
-    X_train_counts = count_vect.fit_transform(X_train)
-
-    tfidf_transformer = TfidfTransformer()
-    X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
+    # tfidf_vectorizer:
+    # ngram_range = (1,2) means that it will tokenize our comments into both words and bi-grams
+    # max_df = 0.8 means that it will keep only features that occur in below 80% of the comments
+    # max_features = 5000 means that it will also only keep the top 5000 features (in terms of document frequency)
+    tfidf_vectorizer = TfidfVectorizer(ngram_range = (1,2), max_df = 0.8, max_features = 5000)
+    
+    # run tfidf_vectorizer on the training data
+    X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
 
     Multinomial_Classification = MultinomialNB(alpha = 0.05).fit(X_train_tfidf, y_train)
     Bernoulli_Classification = BernoulliNB().fit(X_train_tfidf, y_train)
@@ -44,10 +47,10 @@ def majority_vote(train_data, test_data):
     
     test = Preprocessing.prune(test_data)
 
-    mc = Multinomial_Classification.predict(count_vect.transform(test))
-    bc = Bernoulli_Classification.predict(count_vect.transform(test))
+    mc = Multinomial_Classification.predict(tfidf_vectorizer.transform(test))
+    bc = Bernoulli_Classification.predict(tfidf_vectorizer.transform(test))
     #dt = Decision_Trees_Classification.predict(count_vect.transform(test))
-    lr = Logistic_Regression_Classification.predict(count_vect.transform(test))
+    lr = Logistic_Regression_Classification.predict(tfidf_vectorizer.transform(test))
     
     votes = np.array([mc, bc, lr]).T
 
@@ -81,49 +84,48 @@ def majority_vote(train_data, test_data):
 def predict(train_data, test_data, model):
     (X_train, X_test, y_train, y_test) = train_test_split(Preprocessing.prune(train_data[:,0]), train_data[:,1], random_state = 0)
 
-    count_vect = CountVectorizer()
-    X_train_counts = count_vect.fit_transform(X_train)
-
-    tfidf_transformer = TfidfTransformer()
-    X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
-
+    # tfidf_vectorizer:
+    # ngram_range = (1,2) means that it will tokenize our comments into both words and bi-grams
+    # max_df = 0.8 means that it will keep only features that occur in below 80% of the comments
+    # max_features = 5000 means that it will also only keep the top 5000 features (in terms of document frequency)
+    tfidf_vectorizer = TfidfVectorizer(ngram_range = (1,2), max_df = 0.8, max_features = 5000)
+    
+    # run tfidf_vectorizer on the training data
+    X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
+    
     test = Preprocessing.prune(test_data)
-
-    if model == 'Ada':
-        Ada_Classification = AdaBoostClassifier(base_estimator = MultinomialNB(0.05), n_estimators = 200, random_state = 0).fit(X_train_tfidf, y_train)
-        return Ada_Classification.predict(count_vect.transform(test))
 
     if model == 'Bernoulli':
         Bernoulli_Classification = BernoulliNB().fit(X_train_tfidf, y_train)
-        return Bernoulli_Classification.predict(count_vect.transform(test))
+        return Bernoulli_Classification.predict(tfidf_vectorizer.transform(test))
         
     if model == 'Multinomial':
         Multinomial_Classification = MultinomialNB(alpha = 0.05).fit(X_train_tfidf, y_train)
-        return Multinomial_Classification.predict(count_vect.transform(test))
+        return Multinomial_Classification.predict(tfidf_vectorizer.transform(test))
     
     if model == 'DecisionTree':
         Decision_Trees_Classification = DecisionTreeClassifier(random_state = 0).fit(X_train_tfidf, y_train)
-        return Decision_Trees_Classification.predict(count_vect.transform(test))
+        return Decision_Trees_Classification.predict(tfidf_vectorizer.transform(test))
     
     if model == 'Logistic':
         Logistic_Regression_Classification = LogisticRegression(random_state = 0, solver = 'lbfgs', multi_class = 'multinomial').fit(X_train_tfidf, y_train)
-        return Logistic_Regression_Classification.predict(count_vect.transform(test))
+        return Logistic_Regression_Classification.predict(tfidf_vectorizer.transform(test))
 
     else: 
         return majority_vote(train_data, test_data)
 
-ada_predictions = predict(train_data, test_data, 'Ada')
-#multinomial_predictions = predict(train_data, test_data, 'Multinomial')
+#ada_predictions = predict(train_data, test_data, 'Ada')
+multinomial_predictions = predict(train_data, test_data, 'Multinomial')
 #bernoulli_predictions = predict(train_data, test_data, 'Bernoulli')
 #decision_predictions = predict(train_data, test_data, 'DecisionTree')
 #logistic_predictions = predict(train_data, test_data, 'Logistic')
 #majority_predictions = predict(train_data, test_data, 'Majority')
 
-with open('Ada.csv', mode = 'w') as file1:
+with open('MultinomialResults.csv', mode = 'w') as file1:
     writer1 = csv.writer(file1, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
     writer1.writerow(['id','Category'])
-    for i in range(0, len(ada_predictions)):
-        writer1.writerow([str(i), str(ada_predictions[i])])
+    for i in range(0, len(multinomial_predictions)):
+        writer1.writerow([str(i), str(multinomial_predictions[i])])
 
 #with open('BernoulliResults.csv', mode = 'w') as file2:
 #    writer2 = csv.writer(file2, delimiter = ',', quotechar = '"', quoting = csv.QUOTE_MINIMAL)
