@@ -6,8 +6,11 @@ Details of Preprocessing.py:
 This program will be called in the Naive.py program. It is not necessary to run it on its own to generate any of our results. 
 
 Details of Naive.py: 
-This program is our Bernoulli Naive Bayes Classifier.
-JACOB
+This program is our Bernoulli Naive Bayes Classifier. To test this, refer to Details of Test.py right below.
+
+Details of Test.py:
+By running this file on terminal, a Bernoulli Naive Bayes model will be initialized, and will train on 2000 comments (for time efficiency), it will keep the top 70000 tfidf scoring features. Then the accuracy score on the training set and a 5-fold validation will be printed in this order. You may modify the 2000 and 70000 parameters in line 22. 
+
 
 Details of Multinomial_Scikit.py:
 The code can replicate all of our reported results for the Multinomial Naive Bayes classifier.
