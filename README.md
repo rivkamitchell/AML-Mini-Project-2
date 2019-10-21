@@ -37,7 +37,7 @@ This returns an array with entries [A,B] where A is the name of a subreddit and 
 This returns the probability of seeing term x in the text.
 
 4. tfidf(data)
-This returns a matrix of TF-IDF scores. We can interpret the TF-IDF score matrix as follows: Each row is of the form (A,B) C, where A is the comment number, B is the index we have given to a term, C is the TF-IDF score of term B in comment number A. 
+This returns a matrix of TF-IDF scores. We can interpret the Tf-Idf score matrix as follows: Each row is of the form (A,B) C, where A is the comment number, B is the index we have given to a term, C is the Tf-Idf score of term B in comment number A. 
 
 5. score_function(data,j)
 This computes the variable rank of word j in the data.
