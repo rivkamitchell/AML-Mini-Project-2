@@ -16,7 +16,7 @@ In order to replicate the results, we have placed comments throughout the code w
 
 One should note that this file must be stored in a folder which contains the csv files 'reddit_train.csv' and 'reddit_test.csv', which pertain to the training and testing data respectively. 
 
-Details of Linear_Scikit.py
+Details of Linear_Scikit.py:
 The code can replicate all of our reported results for the Logistic Regression and LinearSVC classifiers. In order to replicate the results, we have placed comments throughout the code which indicate which lines to "comment-out" in order to generate different feature extraction techniques, and which lines to "un-comment" in order to choose a model to form predictions with. 
 
 Since we only ran predictions with Scikit Learn on the test data using the Multinomial Naive Bayes classifier, instructions to generate predictions for the test data using these methods are not included in this file. 
