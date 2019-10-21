@@ -1,6 +1,6 @@
 # Mini-Project-2 Description:
 
-To run these programs ensure you have installed sklearn, nltk, pandas, csv, and numpy. If you have not already, you will need run nltk.download() to download the relevant corpuses (stopwords, sentiment).
+To run these programs ensure you have installed sklearn, nltk, pandas, csv, and numpy. If you have not already, you will need run nltk.download() to download the relevant corpuses (stopwords, sentiment, vader lexicon).
 
 Details of Preprocessing.py:
 This program will be called in the Naive.py program. It is not necessary to run it on its own to generate any of our results. 
