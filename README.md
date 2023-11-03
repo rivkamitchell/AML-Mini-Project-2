@@ -1,5 +1,8 @@
 # Mini-Project-2 Description:
 
+The report for this project can be found: 
+https://drive.google.com/file/d/1HFoHiNzdR7Lb_pkgr5OyqktIZNk_YQLr/view?usp=sharing
+
 To run these programs ensure you have installed sklearn, nltk, pandas, csv, and numpy. If you have not already, you will need run nltk.download() to download the relevant corpuses (stopwords, sentiment, vader lexicon).
 
 Details of preprocessing.py:
